@@ -151,8 +151,8 @@ def get_info(share_id):
         "audio_tracks": [{"index": s.get("index"), "codec": s.get("codec_name"),
                           "channels": s.get("channels")} for s in audio],
         "subtitle_tracks": [{"index": s.get("index"), "codec": s.get("codec_name")} for s in subs],
-        "hls_url": f"{PUBLIC_API_BASE_URL}/api/media/{quote(share_id)}/master.m3u8" if item.get("hls_ready") else None,
-        "download_url": f"{PUBLIC_API_BASE_URL}/api/media/{quote(share_id)}/download"
+        "hls_url": f"{PUBLIC_API_BASE_URL}/media/{quote(share_id)}/master.m3u8" if item.get("hls_ready") else None,
+        "download_url": f"{PUBLIC_API_BASE_URL}/media/{quote(share_id)}/download"
     })
 
 @app.get("/api/media/<share_id>/master.m3u8")
@@ -164,7 +164,7 @@ def master_playlist(share_id):
     if not playlist.is_file():
         abort(404)
     text = playlist.read_text(encoding="utf-8", errors="replace")
-    prefix = f"/api/media/{quote(share_id)}/hls/"
+    prefix = f"{PUBLIC_API_BASE_URL}/media/{quote(share_id)}/hls/"
     lines = []
     for line in text.splitlines():
         stripped = line.strip()

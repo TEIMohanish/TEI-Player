@@ -10,7 +10,7 @@ type MediaInfo = {
   width: number | null; height: number | null; video_codec: string | null;
   audio_tracks: Track[]; subtitle_tracks: Track[]; hls_url: string | null; download_url: string;
 };
-const API = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+const API = "/api/proxy";
 function bytes(n: number) {
   if (!Number.isFinite(n) || n < 0) return "Unknown";
   const units = ["B","KB","MB","GB","TB"]; let v=n,i=0;
@@ -32,7 +32,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   useEffect(()=>{
     if(!API){setError("Player API is not configured. Add NEXT_PUBLIC_API_BASE_URL in Vercel.");return;}
     let dead=false;
-    fetch(`${API}/api/media/${encodeURIComponent(params.id)}`)
+    fetch(`${API}/media/${encodeURIComponent(params.id)}`)
       .then(async r=>{if(!r.ok)throw new Error(r.status===410?"This player link has expired.":"Media link not found or unavailable.");return r.json();})
       .then((d:MediaInfo)=>{if(!dead)setMedia(d);})
       .catch(e=>{if(!dead)setError(e.message||"Unable to load media.");});
