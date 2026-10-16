@@ -1,0 +1,12 @@
+.env
+**/.env
+*.session
+*.session-journal
+__pycache__/
+*.py[cod]
+node_modules/
+.next/
+.vercel/
+.DS_Store
+data/
+media/
