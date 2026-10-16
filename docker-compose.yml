@@ -1,19 +1,4 @@
 services:
-  mongodb:
-    image: mongo:7
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-    volumes:
-      - mongo_data:/data/db
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    networks: [tei-internal]
-
   api:
     build:
       context: .
@@ -22,10 +7,6 @@ services:
     env_file: .env
     environment:
       MEDIA_DIR: /media
-      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/tei_player?authSource=admin
-    depends_on:
-      mongodb:
-        condition: service_healthy
     volumes:
       - media_data:/media
     ports:
@@ -42,7 +23,6 @@ services:
     environment:
       BOT_API_URL: http://api:5055
       MEDIA_DIR: /media
-      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/tei_player?authSource=admin
     depends_on:
       - api
     volumes:
@@ -58,17 +38,12 @@ services:
     env_file: .env
     environment:
       MEDIA_DIR: /media
-      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/tei_player?authSource=admin
-    depends_on:
-      mongodb:
-        condition: service_healthy
     volumes:
       - media_data:/media
     command: ["sh", "-c", "while true; do python cleanup.py; sleep $${CLEANUP_INTERVAL_MINUTES:-10}m; done"]
     networks: [tei-internal]
 
 volumes:
-  mongo_data:
   media_data:
   bot_session:
 

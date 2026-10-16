@@ -16,7 +16,7 @@ from pymongo import MongoClient, ASCENDING
 
 load_dotenv()
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = int(os.getenv("MAX_UPLOAD_BYTES", str(20 * 1024**3)))
+app.config["MAX_CONTENT_LENGTH"] = int(os.getenv("MAX_UPLOAD_BYTES", str(4 * 1024**3)))
 MEDIA_DIR = Path(os.getenv("MEDIA_DIR", "/media")).resolve()
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 RETENTION_HOURS = max(1, int(os.getenv("FILE_RETENTION_HOURS", "6")))

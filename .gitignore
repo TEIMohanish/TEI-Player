@@ -10,3 +10,10 @@ node_modules/
 .DS_Store
 data/
 media/
+.env.*
+!.env.example
+credentials.json
+rclone.conf
+*.wvd
+*.pem
+*.key

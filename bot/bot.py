@@ -16,7 +16,7 @@ BOT_API_URL = os.getenv("BOT_API_URL", "http://api:5055").rstrip("/")
 BOT_API_TOKEN = os.environ["BOT_API_TOKEN"]
 MEDIA_DIR = Path(os.getenv("MEDIA_DIR", "/media")).resolve()
 PLAYER_BASE_URL = os.getenv("PLAYER_BASE_URL", "").rstrip("/")
-MAX_DOWNLOAD_BYTES = int(os.getenv("MAX_DOWNLOAD_BYTES", str(20 * 1024**3)))
+MAX_DOWNLOAD_BYTES = int(os.getenv("MAX_DOWNLOAD_BYTES", str(4 * 1024**3)))
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 app = Client("tei_player_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN,
@@ -45,7 +45,10 @@ async def on_media(client, message):
     name = clean_name(getattr(obj, "file_name", None) or f"video_{message.id}.mp4")
     size = int(getattr(obj, "file_size", 0) or 0)
     if size > MAX_DOWNLOAD_BYTES:
-        await message.reply_text("This file exceeds the configured download limit.")
+        await message.reply_text(
+            f"This file exceeds the configured limit of {MAX_DOWNLOAD_BYTES / (1024**3):.1f} GiB. "
+            "Telegram and the active Pyrogram/MTProto path may impose a lower limit."
+        )
         return
     target = MEDIA_DIR / f"upload_{message.chat.id}_{message.id}_{name}"
     status = await message.reply_text("📥 Downloading original file…")

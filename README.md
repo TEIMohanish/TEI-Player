@@ -7,7 +7,7 @@ Includes the Vercel Next.js frontend, Flask/Gunicorn API, Pyrogram Telegram bot,
 **Vercel cannot host this whole architecture by itself.**
 - Vercel hosts the Next.js frontend and share pages.
 - The VPS runs the Flask API, Telegram bot, FFmpeg and media files.
-- MongoDB runs in Docker on the VPS by default, or can be changed to MongoDB Atlas.
+- MongoDB Atlas is used as the external database; Docker Compose does not start a second MongoDB server.
 - Docker Compose starts the backend services on the VPS. Vercel deployment is separate and connects to the public HTTPS API.
 
 The frontend is designed with the agreed TEI Player visual direction: dark navy/black background, neon-blue accents, cinematic player, controls inside the video, simple original-file metadata, expiry countdown, and separate buttons for Download Original File, Copy HLS URL and External Players. The desktop layout is retained and the page is responsive on mobile.
@@ -26,7 +26,7 @@ No video re-encoding is performed. HLS is marked unavailable if packaging fails.
 - Vercel account
 - Telegram bot token, Telegram API ID and API hash
 - A public HTTPS URL for the API (free options depend on provider availability; a domain is not included)
-- MongoDB is included in Docker Compose by default
+- A MongoDB Atlas cluster and connection URL
 
 ## 1. Configure environment
 
@@ -35,11 +35,11 @@ cp .env.example .env
 nano .env
 ```
 
-Set strong unique values for `MONGO_ROOT_PASSWORD` and `BOT_API_TOKEN`, and fill `API_ID`, `API_HASH`, and `BOT_TOKEN`. Set `PLAYER_BASE_URL` after Vercel gives you a URL. Set `CORS_ORIGINS` to that exact Vercel origin. `PUBLIC_API_BASE_URL` must be the public HTTPS API origin, with no trailing slash.
+Fill `MONGODB_URI` with your MongoDB Atlas connection string (including `/tei_player` before query parameters), and set a strong unique `BOT_API_TOKEN`. Fill `API_ID`, `API_HASH`, and `BOT_TOKEN`. Do not use the Atlas password previously pasted into chat; rotate it first and use the new URL-encoded password. Set `PLAYER_BASE_URL` after Vercel gives you a URL. Set `CORS_ORIGINS` to that exact Vercel origin. `PUBLIC_API_BASE_URL` must be the public HTTPS API origin, with no trailing slash.
 
 Never commit `.env`, bot session files, database data or private credentials.
 
-## 2. Deploy API + bot + MongoDB on the VPS
+## 2. Deploy API + bot on the VPS
 
 Install Docker and the Compose plugin if not already installed. From this project directory:
 
@@ -89,9 +89,9 @@ Vercel can automatically redeploy the frontend on GitHub pushes. This does not d
 
 ## 4. Bot use
 
-Open the Telegram bot and send a video or document. It downloads the original file to `/srv/tei-player/media`, registers it, attempts HLS stream-copy packaging, and returns the player URL.
+Open the Telegram bot and send a video or document. It downloads the original file to the shared `/media` volume, registers it, attempts HLS stream-copy packaging, and returns the player URL. The configured per-file cap is 4 GiB (`MAX_DOWNLOAD_BYTES` and `MAX_UPLOAD_BYTES`).
 
-The bot currently accepts private-chat video/document uploads. Telegram bot download limits and available VPS storage apply. Keep only media you are authorized to distribute.
+**Important large-file limitation:** this setting is only the application cap, not a guarantee that Telegram will deliver or Pyrogram can download every 4 GB file. Telegram client/API limits and the exact sender/account/file path may impose a lower limit. Test with a non-sensitive large file before relying on 4 GB uploads. The VPS must have enough free disk space for the original plus HLS segments and concurrent uploads. Keep only media you are authorized to distribute.
 
 ## API endpoints
 
@@ -110,9 +110,9 @@ Default retention is 6 hours. `cleanup` service runs every 10 minutes and delete
 
 - Use HTTPS for public API and HLS.
 - Keep secrets out of GitHub.
-- Change default database password before first startup.
+- Rotate any MongoDB credentials that were shared or committed.
 - Set CORS to your exact Vercel origin.
-- Keep MongoDB's port unexposed publicly (Compose does not publish it).
+- Keep the MongoDB Atlas connection string out of GitHub and never commit `.env`.
 - Keep API port bound to loopback behind a TLS proxy/tunnel.
 - Share IDs are bearer links: anyone possessing a valid link can access the media until expiry.
 - The bot API token is required for registration.
